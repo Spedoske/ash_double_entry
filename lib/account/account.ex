@@ -17,6 +17,13 @@ defmodule AshDoubleEntry.Account do
         """,
         default: []
       ],
+      use_identifier: [
+        type: :boolean,
+        doc: """
+        Whether to include `identifier` in the structure.
+        """,
+        default: true
+      ],
       pre_check_identities_with: [
         type: {:spark, Ash.Domain},
         doc: "A domain to use to precheck generated identities. Required by certain data layers."

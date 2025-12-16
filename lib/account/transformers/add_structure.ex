@@ -13,6 +13,7 @@ defmodule AshDoubleEntry.Account.Transformers.AddStructure do
   def before?(_), do: false
 
   def transform(dsl) do
+    use_identifier = AshDoubleEntry.Account.Info.account_use_identifier!(dsl)
     dsl
     |> add_primary_read_action()
     |> Ash.Resource.Builder.add_new_attribute(:id, :uuid,
@@ -22,7 +23,10 @@ defmodule AshDoubleEntry.Account.Transformers.AddStructure do
       allow_nil?: false,
       default: &Ash.UUID.generate/0
     )
-    |> Ash.Resource.Builder.add_new_attribute(:identifier, :string, allow_nil?: false)
+    |> case do
+       d when use_identifier -> Ash.Resource.Builder.add_new_attribute(d, :identifier, :string, allow_nil?: false)
+       d -> d
+    end
     |> Ash.Resource.Builder.add_new_attribute(
       :currency,
       :string,
@@ -31,7 +35,7 @@ defmodule AshDoubleEntry.Account.Transformers.AddStructure do
     |> Ash.Resource.Builder.add_new_action(:create, :open,
       accept:
         Enum.uniq(
-          [:identifier, :currency] ++ AshDoubleEntry.Account.Info.account_open_action_accept!(dsl)
+          if use_identifier do [:identifier, :currency] else [:currency] end ++ AshDoubleEntry.Account.Info.account_open_action_accept!(dsl)
         )
     )
     |> Ash.Resource.Builder.add_new_action(:read, :lock_accounts,
@@ -53,9 +57,12 @@ defmodule AshDoubleEntry.Account.Transformers.AddStructure do
     )
     |> add_balance_as_of_ulid_calculation()
     |> add_balance_as_of_calculation()
-    |> Ash.Resource.Builder.add_new_identity(:unique_identifier, [:identifier],
-      pre_check_with: pre_check_with(dsl)
-    )
+    |> case do
+       d when use_identifier -> Ash.Resource.Builder.add_new_identity(d, :unique_identifier, [:identifier],
+         pre_check_with: pre_check_with(dsl)
+       )
+       d -> d
+    end
   end
 
   defbuilder add_balance_as_of_ulid_calculation(dsl) do

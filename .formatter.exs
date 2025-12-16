@@ -11,6 +11,7 @@ spark_locals_without_parens = [
   destroy_balances?: 1,
   money_composite_type?: 1,
   open_action_accept: 1,
+  use_identifier: 1,
   pre_check_identities_with: 1,
   transfer_resource: 1
 ]
